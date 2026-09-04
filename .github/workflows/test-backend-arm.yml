@@ -35,6 +35,9 @@ jobs:
       timeout: 120
       run-linux: true
       docker-image: ci-image:executorch-ubuntu-22.04-arm-sdk
+      # EXPERIMENT: same 15 vCPU / 116Gi, on Intel r7i instead of AMD r7a, and
+      # deliberately without a worker override, so vendor is the only variable.
+      runner-linux: mt-l-x86iamx-16-128
 
   test-arm-vgf:
     uses: ./.github/workflows/_test_backend.yml
