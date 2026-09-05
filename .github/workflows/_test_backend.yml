@@ -77,6 +77,12 @@ jobs:
       script: |
         set -eux
 
+        # EXPERIMENT: the only cells that kill the pod are the ones whose
+        # failures dump a few hundred thousand lines of Vela output. Drop the
+        # captured-output sections from the failure report and see whether the
+        # pod survives; results and the JSON report are unaffected.
+        export PYTEST_ADDOPTS="--show-capture=no"
+
         source .ci/scripts/test_backend.sh "${{ matrix.suite }}" "${{ matrix.flow }}" "${RUNNER_ARTIFACT_DIR}"
 
   package-golden-artifacts:
