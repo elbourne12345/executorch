@@ -35,6 +35,37 @@ jobs:
       timeout: 120
       run-linux: true
       docker-image: ci-image:executorch-ubuntu-22.04-arm-sdk
+      # Run by test-arm-ethos-u-models below instead, on v2.
+      exclude: >-
+        [{"flow": "arm_ethos_u55", "suite": "models"},
+         {"flow": "arm_ethos_u85", "suite": "models"}]
+
+  # The two cells excluded above. On an OSDC pod they die partway through
+  # reporting their failures, with "Executing the custom container
+  # implementation failed" and no pytest summary, on every combination of
+  # vendor, worker count and pod memory tried. They complete on EC2, and every
+  # other cell of this suite passes on OSDC, so it is specific to the two that
+  # run Corstone FVP on large models and emit a few hundred thousand lines of
+  # Vela output per failure. Fold back into test-arm once that is understood.
+  test-arm-ethos-u-models:
+    if: ${{ github.event_name != 'pull_request' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        flow: [arm_ethos_u55, arm_ethos_u85]
+
+    uses: pytorch/test-infra/.github/workflows/linux_job_v2.yml@main
+    with:
+      ref: ${{ github.sha }}
+      runner: linux.4xlarge.memory
+      docker-image: ci-image:executorch-ubuntu-22.04-arm-sdk
+      submodules: recursive
+      timeout: 120
+      upload-artifact: test-report-arm-${{ matrix.flow }}-models
+      script: |
+        set -eux
+
+        source .ci/scripts/test_backend.sh models "${{ matrix.flow }}" "${RUNNER_ARTIFACT_DIR}"
 
   test-arm-vgf:
     uses: ./.github/workflows/_test_backend.yml
